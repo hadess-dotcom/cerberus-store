@@ -1,5 +1,6 @@
+require('dotenv').config()
+
 require('./deploy-commands')
-  require('dotenv').config()
 
 const fs = require('fs')
 const express = require('express')
@@ -11,9 +12,20 @@ const {
   ActivityType
 } = require('discord.js')
 
+// 🌐 EXPRESS
 const app = express()
 
-// 🤖 CLIENTE DISCORD
+app.get('/', (req, res) => {
+  res.send('🟣 CERBERUS STORE ONLINE')
+})
+
+const PORT = process.env.PORT || 3000
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🌐 API ONLINE NA PORTA ${PORT}`)
+})
+
+// 🤖 DISCORD CLIENT
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -23,10 +35,9 @@ const client = new Client({
   ]
 })
 
-// 📦 COLLECTION DE COMANDOS
+// 📦 COMANDOS
 client.commands = new Collection()
 
-// 📂 CARREGAR COMANDOS
 const commandFiles = fs
   .readdirSync('./commands')
   .filter(file => file.endsWith('.js'))
@@ -40,40 +51,15 @@ for (const file of commandFiles) {
   console.log(`✅ Comando carregado: ${command.data.name}`)
 }
 
-// 🌐 API EXPRESS
-app.use(express.json())
-
-app.get('/', (req, res) => {
-  res.send('🟣 CERBERUS STORE ONLINE')
-})
-
-// 🚀 BOT ONLINE
+// 🚀 READY
 client.once('ready', async () => {
+
   console.log(`🟣 ${client.user.tag} ONLINE`)
 
   client.user.setActivity({
     name: 'CERBERUS STORE',
     type: ActivityType.Watching
   })
-
-  try {
-
-    console.log('🔄 Registrando comandos...')
-
-    const commands = client.commands.map(cmd =>
-      cmd.data.toJSON()
-    )
-
-    // 🔥 REGISTRAR COMANDOS GLOBALMENTE
-    await client.application.commands.set(commands)
-
-    console.log('✅ Comandos registrados globalmente')
-
-  } catch (err) {
-
-    console.error('❌ ERRO AO REGISTRAR:', err)
-
-  }
 
 })
 
@@ -94,36 +80,9 @@ client.on('interactionCreate', async interaction => {
 
     console.error(err)
 
-    if (interaction.replied || interaction.deferred) {
-
-      await interaction.followUp({
-        content: '❌ Ocorreu um erro.',
-        ephemeral: true
-      })
-
-    } else {
-
-      await interaction.reply({
-        content: '❌ Ocorreu um erro.',
-        ephemeral: true
-      })
-
-    }
-
   }
 
 })
 
 // 🔑 LOGIN
 client.login(process.env.DISCORD_BOT_TOKEN)
-  .then(() => {
-    console.log('✅ LOGIN REALIZADO')
-  })
-  .catch(err => {
-    console.error('❌ ERRO LOGIN:', err)
-  })
-
-// 🌐 SERVIDOR ONLINE
-app.listen(process.env.PORT || 3000, () => {
-  console.log('🌐 API ONLINE')
-})
