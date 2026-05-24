@@ -52,10 +52,16 @@ client.on('ready', async () => {
 
   console.log(`🟣 ${client.user.tag} ONLINE`)
 
-  client.user.setActivity({
-    name: 'CERBERUS STORE',
-    type: ActivityType.Watching
-  })
+console.log('🔥 READY EXECUTADO')
+
+client.user.setActivity({
+  name: 'CERBERUS STORE',
+  type: ActivityType.Watching
+})
+
+console.log('🔥 INICIANDO REST')
+
+const rest = new REST({ version: '10' })
 
   // 🔥 REGISTRAR COMANDOS
   const rest = new REST({ version: '10' })
