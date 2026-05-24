@@ -496,7 +496,7 @@ ${CONFIG.icones.estoque} | **Estoque:** ${produto.estoque.length}`)
           .setCustomId('gerenciar_estoque')
           .setPlaceholder("Selecione uma opção para continuar")
           .addOptions([
-            { label: "Gerenciar (Online)", description: "Gerencia via site", value: "online", emoji: "<>💻" },
+            { label: "Gerenciar (Online)", description: "Gerencia via site", value: "online", emoji: "💻" },
             { label: "Gerenciar", description: "Gerenciar estoque", value: "gerenciar", emoji: "🛍️" },
             { label: "Backup", description: "Salvar backup", value: "backup", emoji: "💾" },
             { label: "Limpar", description: "Apagar todo estoque", value: "limpar", emoji: "⚠️" },
@@ -508,9 +508,15 @@ ${CONFIG.icones.estoque} | **Estoque:** ${produto.estoque.length}`)
       return i.update({ embeds: [embedEstoque], components: [menuEstoque] });
     }
 
-    // 🎨 MENU DE DESIGN
+    // 🎨 MENU DE DESIGN • CORRIGIDO AQUI!
     if (opcao === 'design') {
       const modal = new ModalBuilder().setCustomId('modal_design').setTitle("🎨 Configurações Gerais");
+      
       modal.addComponents(
-        new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('nome').setLabel("Nome do produto").setStyle(TextInputStyle.Short).setValue(produto.nome).setRequired(true)),
-        new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('desc
+        new ActionRowBuilder().addComponents(
+          new TextInputBuilder()
+            .setCustomId('nome')
+            .setLabel("Nome do produto")
+            .setStyle(TextInputStyle.Short)
+            .setValue(produto.nome)
+            .setReq
