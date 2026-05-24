@@ -1,10 +1,13 @@
 require('dotenv').config()
 
+const fs = require('fs')
+
 const express = require('express')
 
 const {
   Client,
   GatewayIntentBits,
+  Collection,
   ActivityType
 } = require('discord.js')
 
@@ -19,14 +22,30 @@ const client = new Client({
   ]
 })
 
+client.commands = new Collection()
+
+// 📂 CARREGAR COMANDOS
+const commandFiles = fs
+  .readdirSync('./commands')
+  .filter(file => file.endsWith('.js'))
+
+for(const file of commandFiles) {
+
+  const command = require(`./commands/${file}`)
+
+  client.commands.set(command.data.name, command)
+
+  console.log(`✅ Comando carregado: ${command.data.name}`)
+}
+
+// 🌐 API
 app.use(express.json())
 
-// 🌐 Rota principal
 app.get('/', (req, res) => {
   res.send('🟣 CERBERUS STORE ONLINE')
 })
 
-// 🤖 Bot pronto
+// 🤖 BOT ONLINE
 client.once('clientReady', () => {
 
   console.log(`🟣 ${client.user.tag} ONLINE`)
@@ -38,10 +57,31 @@ client.once('clientReady', () => {
 
 })
 
-// 🔑 Login bot
+// ⚡ INTERAÇÕES
+client.on('interactionCreate', async interaction => {
+
+  if(!interaction.isChatInputCommand()) return
+
+  const command = client.commands.get(interaction.commandName)
+
+  if(!command) return
+
+  try {
+
+    await command.execute(interaction)
+
+  } catch(err) {
+
+    console.log(err)
+
+  }
+
+})
+
+// 🔑 LOGIN
 client.login(process.env.DISCORD_BOT_TOKEN)
 
-// 🚀 API online
+// 🚀 API ONLINE
 app.listen(process.env.PORT || 3000, () => {
   console.log('🌐 API ONLINE')
 })
