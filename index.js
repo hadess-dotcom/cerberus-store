@@ -18,11 +18,11 @@ const { MercadoPagoConfig, Payment } = require('mercadopago');
 const express = require('express');
 const fs = require('fs');
 
-const TOKEN = "MTUwODEzOTIwODc2NDY4NjMzNw.GOyCPC.iyNB5tQW8U8l_YAM9FjsyBmyTH2w8m2ccQ1POOM";
- const CLIENT_ID = "1508139208764686337";
- const GUILD_ID = "1237516902692032563";
- const MP_TOKEN = "SEU_TOKEN_DO_MERCADO_PAGO_AQUI"; // <-- COLOCA O SEU AQUI
- const WEBHOOK_URL = "https://cerberus-store.up.railway.app/webhook";
+const TOKEN = process.env.DISCORD_BOT_TOKEN;
+const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
+const GUILD_ID = process.env.DISCORD_GUILD_ID;
+const MP_TOKEN = process.env.MERCADO_PAGO_ACCESS_TOKEN;
+const WEBHOOK_URL = process.env.WEBHOOK_URL;
 
 
 // 👑 CONFIGURAÇÃO DO CARGO DE ADMINISTRADOR
