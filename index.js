@@ -19,7 +19,7 @@ const express = require('express');
 const fs = require('fs');
 
 // ✅ Variáveis DIRETAS (APENAS PARA TESTE)
-const TOKEN = "MTUwNzU3NjE5Njg0MDI5NjQ3OQ.GSUCDm.FrhqbZSBEvrsSOzerwUqOgfMKI2WPpAr1npwTw";
+const TOKEN = "";
 const CLIENT_ID = "1508139208764686337";
 const GUILD_ID = "1237516902692032563";
 const MP_TOKEN = "COLE_SEU_TOKEN_DO_MERCADO_PAGO_AQUI";
