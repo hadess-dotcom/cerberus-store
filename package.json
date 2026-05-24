@@ -1,10 +1,17 @@
 {
   "name": "cerberus-store",
   "version": "1.0.0",
+  "description": "Loja de contas automática - Cerberus Store",
   "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {
-    "discord.js": "^14.15.3",
-    "mercadopago": "^2.0.15",
-    "qrcode": "^1.5.3"
+    "discord.js": "^14.16.0",
+    "@discordjs/rest": "^2.4.0",
+    "discord-api-types": "^0.37.100",
+    "mercadopago": "^2.9.0",
+    "express": "^4.21.0"
   }
 }
+
