@@ -1,20 +1,18 @@
 require('dotenv').config()
 
 const fs = require('fs')
-
 const express = require('express')
 
 const {
   Client,
   GatewayIntentBits,
   Collection,
-  ActivityType,
-  REST,
-  Routes
+  ActivityType
 } = require('discord.js')
 
 const app = express()
 
+// 🤖 CLIENTE DISCORD
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -24,6 +22,7 @@ const client = new Client({
   ]
 })
 
+// 📦 COLLECTION DE COMANDOS
 client.commands = new Collection()
 
 // 📂 CARREGAR COMANDOS
@@ -40,56 +39,39 @@ for (const file of commandFiles) {
   console.log(`✅ Comando carregado: ${command.data.name}`)
 }
 
-// 🌐 API
+// 🌐 API EXPRESS
 app.use(express.json())
 
 app.get('/', (req, res) => {
   res.send('🟣 CERBERUS STORE ONLINE')
 })
 
-// 🤖 BOT ONLINE
+// 🚀 BOT ONLINE
 client.on('ready', async () => {
 
   console.log(`🟣 ${client.user.tag} ONLINE`)
 
-console.log('🔥 READY EXECUTADO')
-
-client.user.setActivity({
-  name: 'CERBERUS STORE',
-  type: ActivityType.Watching
-})
-
-console.log('🔥 INICIANDO REST')
-
-const rest = new REST({ version: '10' })
-
-  // 🔥 REGISTRAR COMANDOS
-  const rest = new REST({ version: '10' })
-    .setToken(process.env.DISCORD_BOT_TOKEN)
+  client.user.setActivity({
+    name: 'CERBERUS STORE',
+    type: ActivityType.Watching
+  })
 
   try {
 
     console.log('🔄 Registrando comandos...')
 
-    const commands = []
-
-    client.commands.forEach(cmd => {
-      commands.push(cmd.data.toJSON())
-    })
-
-    await rest.put(
-      Routes.applicationGuildCommands(
-        process.env.DISCORD_CLIENT_ID,
-        process.env.DISCORD_GUILD_ID
-      ),
-      { body: commands }
+    const commands = client.commands.map(cmd =>
+      cmd.data.toJSON()
     )
 
-    console.log('✅ Comandos registrados')
+    // 🔥 REGISTRAR COMANDOS GLOBALMENTE
+    await client.application.commands.set(commands)
+
+    console.log('✅ Comandos registrados globalmente')
 
   } catch (err) {
 
-    console.log(err)
+    console.error('❌ ERRO AO REGISTRAR:', err)
 
   }
 
@@ -110,7 +92,23 @@ client.on('interactionCreate', async interaction => {
 
   } catch (err) {
 
-    console.log(err)
+    console.error(err)
+
+    if (interaction.replied || interaction.deferred) {
+
+      await interaction.followUp({
+        content: '❌ Ocorreu um erro.',
+        ephemeral: true
+      })
+
+    } else {
+
+      await interaction.reply({
+        content: '❌ Ocorreu um erro.',
+        ephemeral: true
+      })
+
+    }
 
   }
 
@@ -125,7 +123,7 @@ client.login(process.env.DISCORD_BOT_TOKEN)
     console.error('❌ ERRO LOGIN:', err)
   })
 
-// 🚀 API ONLINE
+// 🌐 SERVIDOR ONLINE
 app.listen(process.env.PORT || 3000, () => {
   console.log('🌐 API ONLINE')
 })
