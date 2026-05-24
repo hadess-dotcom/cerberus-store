@@ -112,6 +112,12 @@ client.on('interactionCreate', async interaction => {
 
 // 🔑 LOGIN
 client.login(process.env.DISCORD_BOT_TOKEN)
+  .then(() => {
+    console.log('✅ LOGIN REALIZADO')
+  })
+  .catch(err => {
+    console.error('❌ ERRO LOGIN:', err)
+  })
 
 // 🚀 API ONLINE
 app.listen(process.env.PORT || 3000, () => {
