@@ -20,6 +20,7 @@ const fs = require('fs');
 
 // ✅ Variáveis do Railway
 const TOKEN = process.env.DISCORD_BOT_TOKEN;
+console.log("TOKEN CARREGADO:", TOKEN);
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const GUILD_ID = process.env.DISCORD_GUILD_ID;
 const MP_TOKEN = process.env.MERCADO_PAGO_ACCESS_TOKEN;
