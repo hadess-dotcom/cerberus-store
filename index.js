@@ -144,28 +144,33 @@ app.post('/webhook', async (req, res) => {
 
 app.listen(3000, () => console.log('🌐 Sistema Online | Igual ao Giggle'));
 
-// 📋 COMANDOS
+// 📋 COMANDOS (CORRIGIDOS COM DESCRIÇÕES OBRIGATÓRIAS)
 const comandos = [
   new SlashCommandBuilder().setName('config').setDescription("⚙️ Configurações da loja")
-    .addSubcommand(s => s.setName('pagamentos').setDescription("💳 Configurar formas de pagamento"))
-    .addSubcommand(s => s.setName('logs').setDescription("📝 Canal de logs")
-      .addChannelOption(o => o.setName('canal').setRequired(true))),
-  new SlashCommandBuilder().setName('criar-painel').setDescription('🏪 Cria painel da loja')
-    .addChannelOption(o => o.setName('canal').setRequired(true)),
-  new SlashCommandBuilder().setName('add-produto').setDescription('➕ Adiciona produto direto no canal')
-    .addChannelOption(o => o.setName('canal').setRequired(true))
-    .addStringOption(o => o.setName('nome').setRequired(true))
-    .addNumberOption(o => o.setName('preco').setRequired(true))
-    .addStringOption(o => o.setName('descricao').setRequired(true))
-    .addStringOption(o => o.setName('entrega').setRequired(true))
-    .addIntegerOption(o => o.setName('estoque').setRequired(true)),
+    .addSubcommand(s => 
+      s.setName('pagamentos')
+       .setDescription("💳 Conectar ou alterar forma de pagamento (Mercado Pago)"))
+    .addSubcommand(s => 
+      s.setName('logs')
+       .setDescription("📝 Definir canal para registrar vendas")
+       .addChannelOption(o => o.setName('canal').setDescription('Canal de texto para logs').setRequired(true))
+    ),
+  new SlashCommandBuilder().setName('criar-painel').setDescription('🏪 Cria o painel principal da loja em um canal')
+    .addChannelOption(o => o.setName('canal').setDescription('Escolha o canal onde a loja aparecerá').setRequired(true)),
+  new SlashCommandBuilder().setName('add-produto').setDescription('➕ Adiciona um produto diretamente no canal da loja')
+    .addChannelOption(o => o.setName('canal').setDescription('Canal da loja').setRequired(true))
+    .addStringOption(o => o.setName('nome').setDescription('Nome do produto').setRequired(true))
+    .addNumberOption(o => o.setName('preco').setDescription('Preço em Reais (R$)').setRequired(true))
+    .addStringOption(o => o.setName('descricao').setDescription('Descrição detalhada do produto').setRequired(true))
+    .addStringOption(o => o.setName('entrega').setDescription('Conteúdo que será enviado após o pagamento').setRequired(true))
+    .addIntegerOption(o => o.setName('estoque').setDescription('Quantidade disponível para venda').setRequired(true)),
 ].map(cmd => cmd.toJSON());
 
 const rest = new REST({ version: '10' }).setToken(TOKEN);
 async function registrarComandos() {
   try {
     await rest.put(Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID), { body: comandos });
-    console.log('✅ Comandos prontos!');
+    console.log('✅ Comandos registrados com sucesso!');
   } catch (e) { console.error(e) }
 }
 
@@ -183,7 +188,7 @@ client.on('interactionCreate', async i => {
 
   // ⚙️ /CONFIG → IGUALZINHO O GIGGLE
   if (i.commandName === 'config') {
-    if (!ehAdmin(i)) return i.reply({content:"❌ Sem permissão!", ephemeral:true});
+    if (!ehAdmin(i)) return i.reply({content:"❌ Você não tem permissão!", ephemeral:true});
 
     if (i.options.getSubcommand() === 'pagamentos') {
       const botoes = new ActionRowBuilder().addComponents(
@@ -234,7 +239,7 @@ client.on('interactionCreate', async i => {
   if (i.commandName === 'criar-painel') {
     if (!ehAdmin(i)) return;
     const canal = i.options.getChannel('canal');
-    if (canal.type !== ChannelType.GuildText) return i.reply({content:"❌ Canal inválido!", ephemeral:true});
+    if (canal.type !== ChannelType.GuildText) return i.reply({content:"❌ Escolha um canal de texto válido!", ephemeral:true});
 
     const capa = new EmbedBuilder()
       .setTitle(`${CONFIG.icone} ${CONFIG.nomeLoja}`)
@@ -285,12 +290,12 @@ client.on('interactionCreate', async i => {
     const prodId = i.customId.split('_')[1];
     const prod = produtos.find(p => p.id === prodId);
 
-    if (!prod) return i.reply({content:"❌ Produto não existe!", ephemeral:true});
-    if (prod.estoque.length === 0) return i.reply({content:"❌ Esgotado!", ephemeral:true});
+    if (!prod) return i.reply({content:"❌ Produto não existe ou foi removido!", ephemeral:true});
+    if (prod.estoque.length === 0) return i.reply({content:"❌ Produto esgotado!", ephemeral:true});
 
     try {
       const token = await pegarTokenValido();
-      if (!token) return i.reply({content:"❌ Primeiro conecte o Mercado Pago em /config pagamentos", ephemeral:true});
+      if (!token) return i.reply({content:"❌ Primeiro conecte o Mercado Pago usando /config pagamentos", ephemeral:true});
 
       const mp = new MercadoPagoConfig({ accessToken: token });
       const payment = new Payment(mp);
@@ -317,7 +322,7 @@ client.on('interactionCreate', async i => {
       return i.reply({ embeds: [embedPix], ephemeral: true });
 
     } catch (e) {
-      return i.reply({content:"❌ Erro na transação, verifique a conexão", ephemeral:true});
+      return i.reply({content:"❌ Erro na transação, verifique a conexão com o Mercado Pago", ephemeral:true});
     }
   }
 
