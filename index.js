@@ -7,7 +7,7 @@ const {
 } = require('discord.js');
 
 const { REST } = require('@discordjs/rest');
-const mercadopago = require('mercadopago');
+const { MercadoPagoConfig } = require('mercadopago');
 const fs = require('fs');
 
 const client = new Client({
@@ -18,10 +18,10 @@ const TOKEN = process.env.DISCORD_BOT_TOKEN;
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const GUILD_ID = process.env.DISCORD_GUILD_ID;
 const MP_TOKEN = process.env.MERCADO_PAGO_ACCESS_TOKEN;
-
-mercadopago.configure({
-  access_token: MP_TOKEN
+const clientMp = new MercadoPagoConfig({
+  accessToken: MP_TOKEN
 });
+
 
 const commands = [
   new SlashCommandBuilder()
