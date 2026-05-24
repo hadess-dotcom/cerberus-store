@@ -1,4 +1,4 @@
-require('dotenv').config)
+require('dotenv').config()
 
 const fs = require('fs')
 
@@ -8,7 +8,9 @@ const {
   Client,
   GatewayIntentBits,
   Collection,
-  ActivityType
+  ActivityType,
+  REST,
+  Routes
 } = require('discord.js')
 
 const app = express()
@@ -29,7 +31,7 @@ const commandFiles = fs
   .readdirSync('./commands')
   .filter(file => file.endsWith('.js'))
 
-for(const file of commandFiles) {
+for (const file of commandFiles) {
 
   const command = require(`./commands/${file}`)
 
@@ -46,11 +48,6 @@ app.get('/', (req, res) => {
 })
 
 // 🤖 BOT ONLINE
-const {
-  REST,
-  Routes
-} = require('discord.js')
-
 client.once('clientReady', async () => {
 
   console.log(`🟣 ${client.user.tag} ONLINE`)
@@ -60,7 +57,7 @@ client.once('clientReady', async () => {
     type: ActivityType.Watching
   })
 
-  // 🔥 REGISTRAR COMANDOS AUTOMÁTICO
+  // 🔥 REGISTRAR COMANDOS
   const rest = new REST({ version: '10' })
     .setToken(process.env.DISCORD_BOT_TOKEN)
 
@@ -84,7 +81,7 @@ client.once('clientReady', async () => {
 
     console.log('✅ Comandos registrados')
 
-  } catch(err) {
+  } catch (err) {
 
     console.log(err)
 
@@ -92,29 +89,20 @@ client.once('clientReady', async () => {
 
 })
 
-  console.log(`🟣 ${client.user.tag} ONLINE`)
-
-  client.user.setActivity({
-    name: 'CERBERUS STORE',
-    type: ActivityType.Watching
-  })
-
-})
-
 // ⚡ INTERAÇÕES
 client.on('interactionCreate', async interaction => {
 
-  if(!interaction.isChatInputCommand()) return
+  if (!interaction.isChatInputCommand()) return
 
   const command = client.commands.get(interaction.commandName)
 
-  if(!command) return
+  if (!command) return
 
   try {
 
     await command.execute(interaction)
 
-  } catch(err) {
+  } catch (err) {
 
     console.log(err)
 
