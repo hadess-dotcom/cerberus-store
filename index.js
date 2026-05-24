@@ -48,7 +48,7 @@ app.get('/', (req, res) => {
 })
 
 // 🤖 BOT ONLINE
-client.once('clientReady', async () => {
+client.on('ready', async () => {
 
   console.log(`🟣 ${client.user.tag} ONLINE`)
 
