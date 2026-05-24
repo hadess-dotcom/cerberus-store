@@ -508,15 +508,16 @@ ${CONFIG.icones.estoque} | **Estoque:** ${produto.estoque.length}`)
       return i.update({ embeds: [embedEstoque], components: [menuEstoque] });
     }
 
-    // 🎨 MENU DE DESIGN • CORRIGIDO AQUI!
+    // 🎨 MENU DE DESIGN • CORRIGIDO 100%
     if (opcao === 'design') {
       const modal = new ModalBuilder().setCustomId('modal_design').setTitle("🎨 Configurações Gerais");
       
-      modal.addComponents(
-        new ActionRowBuilder().addComponents(
-          new TextInputBuilder()
-            .setCustomId('nome')
-            .setLabel("Nome do produto")
-            .setStyle(TextInputStyle.Short)
-            .setValue(produto.nome)
-            .setReq
+      const linha1 = new ActionRowBuilder().addComponents(
+        new TextInputBuilder()
+          .setCustomId('nome')
+          .setLabel("Nome do produto")
+          .setStyle(TextInputStyle.Short)
+          .setValue(produto.nome)
+          .setRequired(true)
+      );
+      
