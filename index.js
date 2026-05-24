@@ -19,11 +19,12 @@ const express = require('express');
 const fs = require('fs');
 
 // ✅ Variáveis DIRETAS (APENAS PARA TESTE)
-const TOKEN = "";
-const CLIENT_ID = "1508139208764686337";
-const GUILD_ID = "1237516902692032563";
-const MP_TOKEN = "COLE_SEU_TOKEN_DO_MERCADO_PAGO_AQUI";
-const WEBHOOK_URL = "COLE_A_URL_DO_RAILWAY_AQUI"
+const TOKEN = process.env.DISCORD_BOT_TOKEN;
+const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
+const GUILD_ID = process.env.DISCORD_GUILD_ID;
+const MP_TOKEN = process.env.MERCADO_PAGO_ACCESS_TOKEN;
+const WEBHOOK_URL = process.env.WEBHOOK_URL;
+
 
 // 👑 CONFIGURAÇÃO DO CARGO DE ADMINISTRADOR
 // COLOQUE AQUI O NOME EXATO DO CARGO QUE VOCÊ USA DE ADM
