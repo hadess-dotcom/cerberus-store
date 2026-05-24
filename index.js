@@ -1,4 +1,4 @@
-require('dotenv').config()
+require('dotenv').config)
 
 const fs = require('fs')
 
@@ -46,7 +46,51 @@ app.get('/', (req, res) => {
 })
 
 // 🤖 BOT ONLINE
-client.once('clientReady', () => {
+const {
+  REST,
+  Routes
+} = require('discord.js')
+
+client.once('clientReady', async () => {
+
+  console.log(`🟣 ${client.user.tag} ONLINE`)
+
+  client.user.setActivity({
+    name: 'CERBERUS STORE',
+    type: ActivityType.Watching
+  })
+
+  // 🔥 REGISTRAR COMANDOS AUTOMÁTICO
+  const rest = new REST({ version: '10' })
+    .setToken(process.env.DISCORD_BOT_TOKEN)
+
+  try {
+
+    console.log('🔄 Registrando comandos...')
+
+    const commands = []
+
+    client.commands.forEach(cmd => {
+      commands.push(cmd.data.toJSON())
+    })
+
+    await rest.put(
+      Routes.applicationGuildCommands(
+        process.env.DISCORD_CLIENT_ID,
+        process.env.DISCORD_GUILD_ID
+      ),
+      { body: commands }
+    )
+
+    console.log('✅ Comandos registrados')
+
+  } catch(err) {
+
+    console.log(err)
+
+  }
+
+})
 
   console.log(`🟣 ${client.user.tag} ONLINE`)
 
