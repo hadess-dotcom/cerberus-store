@@ -1,16 +1,16 @@
 const {
   Client,
   GatewayIntentBits,
-  SlashCommandBuilder,
-  Routes,
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  StringSelectMenuBuilder,
   ModalBuilder,
   TextInputBuilder,
-  TextInputStyle
+  TextInputStyle,
+  StringSelectMenuBuilder,
+  SlashCommandBuilder,
+  Routes
 } = require('discord.js');
 
 const { REST } = require('@discordjs/rest');
@@ -18,18 +18,23 @@ const { MercadoPagoConfig, Payment } = require('mercadopago');
 const express = require('express');
 const fs = require('fs');
 
+// ==============================================
+// 🔒 VARIÁVEIS SEGURAS - NÃO TEM DADOS AQUI!
+// ==============================================
 const TOKEN = process.env.DISCORD_BOT_TOKEN;
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const GUILD_ID = process.env.DISCORD_GUILD_ID;
 const MP_TOKEN = process.env.MERCADO_PAGO_ACCESS_TOKEN;
 const WEBHOOK_URL = process.env.WEBHOOK_URL;
 
+// 👑 CONFIGURAÇÕES GERAIS (IGUAL GIGGLE)
+const NOME_CARGO_ADM = "ADM";
+const COR_LOJA = "#5865F2"; // Cor padrão igual Giggle
+const NOME_LOJA = "Cerberus Store";
 
-// 👑 CONFIGURAÇÃO DO CARGO DE ADMINISTRADOR
-// COLOQUE AQUI O NOME EXATO DO CARGO QUE VOCÊ USA DE ADM
-const NOME_CARGO_ADM = "ADM"; // Ex: "ADM", "Moderador", "Equipe", "Dono"
-
-// ✅ Configurações
+// ==============================================
+// ⚙️ INICIALIZAÇÃO
+// ==============================================
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -44,36 +49,39 @@ const payment = new Payment(clientMp);
 const app = express();
 app.use(express.json());
 
-// 📦 LOJA COMPLETA - VÁRIOS PRODUTOS
-let loja = {
-  nome: "Cerberus Store",
-  produtos: [
-    {
-      id: "contas",
-      nome: "Contas Blox Fruits",
-      descricao: "Contas aleatórias nível alto com frutas míticas/lendárias.",
-      preco: 10.00,
-      estoque: [
-        "CONTA1 | NÍVEL MAX | KITSUNE",
-        "CONTA2 | NÍVEL 1500 | LEOPARDO",
-        "CONTA3 | NÍVEL MAX | DRAGÃO"
-      ]
-    },
-    {
-      id: "frutas",
-      nome: "Frutas Permanentes",
-      descricao: "Frutas do jogo na sua conta, 100% seguro.",
-      preco: 25.00,
-      estoque: [
-        "CODIGO-FRUTA-KITSUNE",
-        "CODIGO-FRUTA-DRAGAO",
-        "CODIGO-FRUTA-TREVAS"
-      ]
-    }
-  ]
+// 📦 BANCO DE DADOS DA LOJA
+let lojaConfig = {
+  nome: NOME_LOJA,
+  cor: COR_LOJA,
+  canalLogs: null,
+  cargoComprador: null,
+  mensagemEntrega: "✅ **Obrigado pela compra!**\nAqui está o que você comprou:"
 };
 
-// 📩 WEBHOOK - ENTREGA AUTOMÁTICA
+let produtos = [
+  {
+    id: "contas",
+    nome: "Contas Blox Fruits",
+    descricao: "Contas nível alto com frutas raras.",
+    preco: 10.00,
+    categoria: "contas",
+    estoque: ["CONTA1 | KITSUNE", "CONTA2 | DRAGÃO"]
+  },
+  {
+    id: "frutas",
+    nome: "Frutas Permanentes",
+    descricao: "Entrega automática na sua conta.",
+    preco: 25.00,
+    categoria: "itens",
+    estoque: ["COD-FRUTA-KITSUNE", "COD-FRUTA-TREVAS"]
+  }
+];
+
+let cupons = [];
+
+// ==============================================
+// 🌐 WEBHOOK DE PAGAMENTO (ENTREGA AUTOMÁTICA)
+// ==============================================
 app.post('/webhook', async (req, res) => {
   try {
     const { type, data } = req.body;
@@ -83,22 +91,35 @@ app.post('/webhook', async (req, res) => {
         const usuarioId = detalhe.external_reference?.split('|')[0];
         const produtoId = detalhe.external_reference?.split('|')[1];
 
-        const produto = loja.produtos.find(p => p.id === produtoId);
+        const produto = produtos.find(p => p.id === produtoId);
         if (!produto || produto.estoque.length === 0) return res.sendStatus(200);
 
         const entrega = produto.estoque.shift();
+        
         try {
           const usuario = await client.users.fetch(usuarioId);
           await usuario.send({
             embeds: [
               new EmbedBuilder()
-                .setTitle(`✅ Pagamento Aprovado - ${loja.nome}`)
-                .setDescription(`**Produto:** ${produto.nome}\n\n**🔑 Dados:**\n\`\`\`${entrega}\`\`\`\n\n⚠️ Aproveite!`)
+                .setTitle(`✅ Pagamento Aprovado - ${lojaConfig.nome}`)
+                .setDescription(`${lojaConfig.mensagemEntrega}\n\n\`\`\`${entrega}\`\`\`\n\n🛒 Volte sempre!`)
                 .setColor('Green')
             ]
           });
-          console.log(`📦 Entregue para ${usuario.tag} | Produto: ${produto.nome}`);
-        } catch (e) { console.log("Erro ao enviar DM:", e) }
+
+          // Log no canal
+          if (lojaConfig.canalLogs) {
+            const canal = client.channels.cache.get(lojaConfig.canalLogs);
+            canal?.send(`📥 **VENDA REALIZADA**\nUsuário: <@${usuarioId}>\nProduto: ${produto.nome}\nValor: R$ ${produto.preco.toFixed(2)}`);
+          }
+
+          // Dar cargo
+          if (lojaConfig.cargoComprador) {
+            const membro = client.guilds.cache.get(GUILD_ID)?.members.cache.get(usuarioId);
+            membro?.roles.add(lojaConfig.cargoComprador).catch(() => {});
+          }
+
+        } catch (e) { console.log("Erro ao entregar:", e) }
       }
     }
     res.sendStatus(200);
@@ -107,177 +128,140 @@ app.post('/webhook', async (req, res) => {
 
 app.listen(3000, () => console.log('🌐 Webhook Ativo'));
 
-// ✅ COMANDOS
+// ==============================================
+// 📋 REGISTRAR COMANDOS (IGUAL GIGGLE)
+// ==============================================
 const commands = [
-  new SlashCommandBuilder().setName('loja').setDescription('Abrir a Cerberus Store')
-].map(command => command.toJSON());
+  new SlashCommandBuilder().setName('loja').setDescription('🛒 Abrir loja'),
+  new SlashCommandBuilder().setName('config').setDescription('⚙️ Configurar sistema'),
+  new SlashCommandBuilder().setName('add-produto').setDescription('➕ Adicionar produto'),
+  new SlashCommandBuilder().setName('cupom').setDescription('🎟️ Criar cupom de desconto')
+].map(cmd => cmd.toJSON());
 
 const rest = new REST({ version: '10' }).setToken(TOKEN);
-
 (async () => {
   try { await rest.put(Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID), { body: commands }); }
   catch (e) { console.error(e) }
 })();
 
-// ✅ BOT ONLINE
-client.once('ready', () => console.log(`✅ Bot Online: ${client.user.tag}`));
+// ==============================================
+// 🚀 BOT ONLINE
+// ==============================================
+client.once('ready', () => {
+  console.log(`✅ Bot Online: ${client.user.tag}`);
+  client.user.setActivity(`🛒 ${lojaConfig.nome} | /loja`, { type: 3 });
+});
 
-// 🛑 FUNÇÃO: VERIFICA SE TEM O CARGO DE ADMIN
+// 🛡️ FUNÇÃO DE ADMIN
 function ehAdmin(interaction) {
-  // Verifica se a pessoa tem permissão de Administrador OU tem o cargo com o nome que você definiu
-  return interaction.member.permissions.has('Administrator') || interaction.member.roles.cache.some(role => role.name === NOME_CARGO_ADM);
+  return interaction.member.permissions.has('Administrator') || interaction.member.roles.cache.some(r => r.name === NOME_CARGO_ADM);
 }
 
-// ✅ INTERAÇÕES
+// ==============================================
+// 🧩 INTERAÇÕES E COMANDOS
+// ==============================================
 client.on('interactionCreate', async interaction => {
 
-  // ➡️ /LOJA
+  // 🛒 /LOJA - PAINEL PRINCIPAL IGUAL GIGGLE
   if (interaction.commandName === 'loja') {
     const embed = new EmbedBuilder()
-      .setTitle(`🛒 ${loja.nome}`)
-      .setDescription("Escolha uma categoria de produto abaixo:")
-      .setColor('Purple');
+      .setTitle(`🏪 ${lojaConfig.nome}`)
+      .setColor(lojaConfig.cor)
+      .setDescription("**Bem-vindo!** Escolha uma categoria abaixo para ver nossos produtos:")
+      .setThumbnail(client.user.displayAvatarURL())
+      .setFooter({ text: "Sistema automático | Entrega na hora" });
 
     const botoes = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setLabel('🛍️ Ver Produtos').setCustomId('ver_produtos').setStyle(ButtonStyle.Primary),
-      new ButtonBuilder().setLabel('⚙️ Painel Admin').setCustomId('painel_admin').setStyle(ButtonStyle.Secondary)
+      new ButtonBuilder().setLabel("🔑 Contas").setCustomId("cat_contas").setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setLabel("📦 Itens").setCustomId("cat_itens").setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setLabel("💎 Premium").setCustomId("cat_premium").setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setLabel("👤 Perfil").setCustomId("perfil").setStyle(ButtonStyle.Secondary)
     );
 
     await interaction.reply({ embeds: [embed], components: [botoes] });
   }
 
-  // ➡️ VER PRODUTOS
-  if (interaction.isButton() && interaction.customId === 'ver_produtos') {
-    const opcoes = loja.produtos.map(p => ({
-      label: p.nome,
-      description: `R$ ${p.preco.toFixed(2)} | Estoque: ${p.estoque.length}`,
-      value: p.id
-    }));
-
-    const menu = new ActionRowBuilder().addComponents(
-      new StringSelectMenuBuilder().setCustomId('escolher_produto').setPlaceholder('Selecione um produto...').addOptions(opcoes)
-    );
-
-    await interaction.reply({ content: "📋 **Lista de Produtos:**", components: [menu], ephemeral: true });
-  }
-
-  // ➡️ ESCOLHEU UM PRODUTO NO MENU
-  if (interaction.isStringSelectMenu() && interaction.customId === 'escolher_produto') {
-    const produto = loja.produtos.find(p => p.id === interaction.values[0]);
-    if (!produto) return;
+  // ⚙️ /CONFIG
+  if (interaction.commandName === 'config') {
+    if (!ehAdmin(interaction)) return interaction.reply({content:"❌ Sem permissão!", ephemeral:true});
 
     const embed = new EmbedBuilder()
-      .setTitle(`🛒 ${produto.nome}`)
-      .setDescription(`${produto.descricao}\n\n💸 **Preço:** R$ ${produto.preco.toFixed(2)}\n📦 **Em estoque:** ${produto.estoque.length} unidades`)
-      .setColor('Purple');
+      .setTitle("⚙️ Configurações do Sistema")
+      .setColor(lojaConfig.cor)
+      .addFields(
+        {name: "📌 Canal de Logs", value: lojaConfig.canalLogs ? `<#${lojaConfig.canalLogs}>` : "❌ Não definido"},
+        {name: "🎖️ Cargo Comprador", value: lojaConfig.cargoComprador ? `<@&${lojaConfig.cargoComprador}>` : "❌ Não definido"},
+        {name: "🎨 Cor", value: lojaConfig.cor}
+      );
 
     const botoes = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setLabel('💳 Comprar Agora').setCustomId(`comprar_${produto.id}`).setStyle(ButtonStyle.Success)
+      new ButtonBuilder().setCustomId("cfg_logs").setLabel("Definir Logs").setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId("cfg_cargo").setLabel("Definir Cargo").setStyle(ButtonStyle.Secondary)
     );
 
-    await interaction.update({ embeds: [embed], components: [botoes] });
+    await interaction.reply({embeds:[embed], components:[botoes], ephemeral:true});
   }
 
-  // ➡️ BOTÃO COMPRAR
+  // 🔍 ABRIR CATEGORIA
+  if (interaction.isButton() && interaction.customId.startsWith('cat_')) {
+    const cat = interaction.customId.replace('cat_', '');
+    const lista = produtos.filter(p => p.categoria === cat);
+
+    if (lista.length === 0) return interaction.reply({content:"❌ Nenhum produto aqui ainda!", ephemeral:true});
+
+    const embed = new EmbedBuilder()
+      .setTitle(`📦 Produtos | ${cat.toUpperCase()}`)
+      .setColor(lojaConfig.cor)
+      .setDescription(lista.map((p,i) => `**${i+1}. ${p.nome}**\n> ${p.descricao}\n💸 **R$ ${p.preco.toFixed(2)}** | 📦 Estoque: ${p.estoque.length}\n`).join("\n\n"));
+
+    const botoes = new ActionRowBuilder().addComponents(
+      ...lista.map((p,i) => new ButtonBuilder().setCustomId(`comprar_${p.id}`).setLabel(`Comprar #${i+1}`).setStyle(ButtonStyle.Success))
+    );
+
+    await interaction.reply({embeds:[embed], components:[botoes], ephemeral:true});
+  }
+
+  // 💳 BOTÃO DE COMPRAR
   if (interaction.isButton() && interaction.customId.startsWith('comprar_')) {
-    const produtoId = interaction.customId.replace('comprar_', '');
-    const produto = loja.produtos.find(p => p.id === produtoId);
+    const prodId = interaction.customId.replace('comprar_', '');
+    const produto = produtos.find(p => p.id === prodId);
+    if (!produto) return interaction.reply({content:"❌ Produto inválido", ephemeral:true});
 
-    if (!produto) return;
-    if (produto.estoque.length <= 0) return interaction.reply({ content: "❌ **ESTOQUE ESGOTADO!**", ephemeral: true });
-
-    // GERAR PAGAMENTO
+    // GERAR PIX
     const pagamento = await payment.create({
       body: {
         transaction_amount: produto.preco,
         description: `Compra: ${produto.nome}`,
         payment_method_id: 'pix',
         payer: { email: 'cliente@loja.com' },
-        external_reference: `${interaction.user.id}|${produtoId}`
+        external_reference: `${interaction.user.id}|${produto.id}`
       }
     });
 
-    const qr = pagamento.point_of_interaction.transaction_data.qr_code;
-    const link = pagamento.point_of_interaction.transaction_data.ticket_url;
+    const qr = pagamento.point_of_interaction.transaction_data;
 
-    const embed = new EmbedBuilder()
-      .setTitle('💳 Pagamento PIX')
-      .setDescription(`**Produto:** ${produto.nome}\n**Valor:** R$ ${produto.preco.toFixed(2)}\n\n📱 **Código PIX:**\n\`\`\`${qr}\`\`\``)
-      .setColor('Gold');
+    const embedPix = new EmbedBuilder()
+      .setTitle("💳 Pagamento PIX")
+      .setColor("Gold")
+      .setDescription(`**Produto:** ${produto.nome}\n**Valor:** R$ ${produto.preco.toFixed(2)}\n\n📱 **Código:**\n\`\`\`${qr.qr_code}\`\`\``)
+      .setImage(`data:image/png;base64,${qr.qr_code_base64}`);
 
-    const botaoLink = new ActionRowBuilder().addComponents(new ButtonBuilder().setLabel('🔗 Pagar Agora').setURL(link).setStyle(ButtonStyle.Link));
-    await interaction.reply({ embeds: [embed], components: [botaoLink], ephemeral: true });
+    const btnLink = new ActionRowBuilder().addComponents(new ButtonBuilder().setLabel("🔗 Pagar Agora").setURL(qr.ticket_url).setStyle(ButtonStyle.Link));
+
+    await interaction.reply({embeds:[embedPix], components:[btnLink], ephemeral:true});
   }
 
-  // ➡️ PAINEL ADMIN
-  if (interaction.isButton() && interaction.customId === 'painel_admin') {
-    if (!ehAdmin(interaction)) return interaction.reply({ content: "❌ Apenas Administradores têm acesso.", ephemeral: true });
-
-    const embed = new EmbedBuilder()
-      .setTitle('⚙️ PAINEL ADMIN')
-      .setDescription(`Loja: ${loja.nome}\nTotal de categorias: ${loja.produtos.length}`)
-      .setColor('Red');
-
-    const botoes = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setLabel('📦 Adicionar Estoque').setCustomId('add_estoque').setStyle(ButtonStyle.Success),
-      new ButtonBuilder().setLabel('🏷️ Novo Produto').setCustomId('novo_produto').setStyle(ButtonStyle.Primary)
-    );
-
-    await interaction.reply({ embeds: [embed], components: [botoes], ephemeral: true });
-  }
-
-  // ➡️ ADICIONAR ESTOQUE
-  if (interaction.isButton() && interaction.customId === 'add_estoque') {
+  // ⚙️ CONFIG - DEFINIR CANAL
+  if (interaction.isButton() && interaction.customId === 'cfg_logs') {
     if (!ehAdmin(interaction)) return;
-    const opcoes = loja.produtos.map(p => ({ label: p.nome, value: p.id }));
-    const menu = new ActionRowBuilder().addComponents(new StringSelectMenuBuilder().setCustomId('add_estoque_produto').setPlaceholder('Escolha o produto...').addOptions(opcoes));
-    await interaction.reply({ content: "Qual produto quer adicionar estoque?", components: [menu], ephemeral: true });
+    lojaConfig.canalLogs = interaction.channel.id;
+    await interaction.reply({content:`✅ Canal de logs definido aqui: <#${interaction.channel.id}>`, ephemeral:true});
   }
 
-  // ➡️ ESCOLHEU PRODUTO PARA ADICIONAR ESTOQUE
-  if (interaction.isStringSelectMenu() && interaction.customId === 'add_estoque_produto') {
+  if (interaction.isButton() && interaction.customId === 'cfg_cargo') {
     if (!ehAdmin(interaction)) return;
-    const produtoId = interaction.values[0];
-    const modal = new ModalBuilder().setCustomId(`modal_add_${produtoId}`).setTitle('Adicionar Estoque');
-    const input = new TextInputBuilder().setCustomId('itens').setLabel('Cole os itens (um por linha)').setStyle(TextInputStyle.Paragraph).setRequired(true);
-    modal.addComponents(new ActionRowBuilder().addComponents(input));
-    await interaction.showModal(modal);
-  }
-
-  // ➡️ RECEBEU ESTOQUE
-  if (interaction.isModalSubmit() && interaction.customId.startsWith('modal_add_')) {
-    if (!ehAdmin(interaction)) return;
-    const produtoId = interaction.customId.replace('modal_add_', '');
-    const produto = loja.produtos.find(p => p.id === produtoId);
-    const itens = interaction.fields.getTextInputValue('itens').split('\n').filter(i => i.trim() !== "");
-    produto.estoque.push(...itens);
-    await interaction.reply({ content: `✅ Adicionado! **${itens.length}** itens em ${produto.nome}. Estoque: ${produto.estoque.length}`, ephemeral: true });
-  }
-
-  // ➡️ CRIAR NOVO PRODUTO
-  if (interaction.isButton() && interaction.customId === 'novo_produto') {
-    if (!ehAdmin(interaction)) return;
-    const modal = new ModalBuilder().setCustomId('modal_novo_produto').setTitle('Criar Novo Produto');
-    modal.addComponents(
-      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('id').setLabel('ID Único (sem espaço)').setStyle(TextInputStyle.Short).setRequired(true)),
-      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('nome').setLabel('Nome do Produto').setStyle(TextInputStyle.Short).setRequired(true)),
-      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('preco').setLabel('Preço (ex: 15.50)').setStyle(TextInputStyle.Short).setRequired(true)),
-      new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('desc').setLabel('Descrição').setStyle(TextInputStyle.Paragraph).setRequired(true))
-    );
-    await interaction.showModal(modal);
-  }
-
-  // ➡️ SALVAR NOVO PRODUTO
-  if (interaction.isModalSubmit() && interaction.customId === 'modal_novo_produto') {
-    if (!ehAdmin(interaction)) return;
-    loja.produtos.push({
-      id: interaction.fields.getTextInputValue('id'),
-      nome: interaction.fields.getTextInputValue('nome'),
-      preco: parseFloat(interaction.fields.getTextInputValue('preco')),
-      descricao: interaction.fields.getTextInputValue('desc'),
-      estoque: []
-    });
-    await interaction.reply({ content: `✅ Produto **${interaction.fields.getTextInputValue('nome')}** criado com sucesso!`, ephemeral: true });
+    lojaConfig.cargoComprador = interaction.guild.roles.cache.find(r => r.name.includes("Comprador"))?.id || null;
+    await interaction.reply({content:`✅ Cargo definido: <@&${lojaConfig.cargoComprador}>`, ephemeral:true});
   }
 
 });
