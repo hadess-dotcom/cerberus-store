@@ -1,4 +1,5 @@
-require('dotenv').config()
+require('./deploy-commands')
+  require('dotenv').config()
 
 const fs = require('fs')
 const express = require('express')
