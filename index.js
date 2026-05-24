@@ -508,7 +508,7 @@ ${CONFIG.icones.estoque} | **Estoque:** ${produto.estoque.length}`)
       return i.update({ embeds: [embedEstoque], components: [menuEstoque] });
     }
 
-    // 🎨 MENU DE DESIGN • CORRIGIDO 100%
+    // 🎨 MENU DE DESIGN • CORRIGIDO 100% COMPLETO
     if (opcao === 'design') {
       const modal = new ModalBuilder().setCustomId('modal_design').setTitle("🎨 Configurações Gerais");
       
@@ -519,5 +519,4 @@ ${CONFIG.icones.estoque} | **Estoque:** ${produto.estoque.length}`)
           .setStyle(TextInputStyle.Short)
           .setValue(produto.nome)
           .setRequired(true)
-      );
       
