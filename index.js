@@ -1,3 +1,6 @@
+console.log("TOKEN:", TOKEN);
+console.log("CLIENT_ID:", CLIENT_ID);
+console.log("GUILD_ID:", GUILD_ID);
 const {
   Client,
   GatewayIntentBits,
