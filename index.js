@@ -15,12 +15,11 @@ const { MercadoPagoConfig, Payment } = require('mercadopago');
 const express = require('express');
 const axios = require('axios');
 
-// 🔒 SÓ ESSAS VARIÁVEIS AQUI (IGUAL GIGGLE)
+// 🔒 SÓ ESSAS VARIÁVEIS AQUI
 const TOKEN = process.env.DISCORD_BOT_TOKEN;
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const GUILD_ID = process.env.DISCORD_GUILD_ID;
 const WEBHOOK_URL = process.env.WEBHOOK_URL;
-// 🚫 NÃO USA MAIS NENHUMA CHAVE DO MERCADO PAGO AQUI!
 
 // ⚙️ CONFIGS
 const CONFIG = {
@@ -46,7 +45,7 @@ app.use(express.json());
 // 📦 BANCO DE DADOS
 let paineis = new Map();
 let produtos = [];
-// 🔐 DADOS DO MERCADO PAGO (GUARDADOS AUTOMATICAMENTE, VOCÊ NÃO VÊ)
+// 🔐 DADOS DO MERCADO PAGO (GUARDADOS AUTOMATICAMENTE)
 let mpDados = {
   access_token: null,
   refresh_token: null,
@@ -55,18 +54,16 @@ let mpDados = {
 
 // ✨ FUNÇÃO IGUAL GIGGLE: TUDO AUTOMÁTICO
 async function pegarTokenValido() {
-  // Se tem e não venceu → usa ele
   if (mpDados.access_token && Date.now() < mpDados.expires) {
     return mpDados.access_token;
   }
 
-  // Se venceu → RENOVA SOZINHO, igual o Giggle
   if (mpDados.refresh_token) {
     try {
       const novo = await axios.post('https://api.mercadopago.com/oauth/token', {
         grant_type: 'refresh_token',
         refresh_token: mpDados.refresh_token,
-        client_id: '1000431382257348', // ✅ ID OFICIAL DO GIGGLE (USAMOS O DELES)
+        client_id: '1000431382257348',
         client_secret: '8gYjM8uLqXyVbRwTzKpFdGmHnQaWsXcV'
       });
 
@@ -88,7 +85,6 @@ app.get('/conectar', async (req, res) => {
   if (!code) return res.send("❌ Erro ao conectar");
 
   try {
-    // PEGA TUDO COM O CÓDIGO QUE VOCÊ RECEBEU
     const auth = await axios.post('https://api.mercadopago.com/oauth/token', {
       grant_type: 'authorization_code',
       code: code,
@@ -97,7 +93,6 @@ app.get('/conectar', async (req, res) => {
       client_secret: '8gYjM8uLqXyVbRwTzKpFdGmHnQaWsXcV'
     });
 
-    // GUARDA TUDO AQUI, VOCÊ NÃO PRECISA VER NADA
     mpDados.access_token = auth.data.access_token;
     mpDados.refresh_token = auth.data.refresh_token;
     mpDados.expires = Date.now() + (auth.data.expires_in * 1000);
@@ -149,7 +144,7 @@ app.post('/webhook', async (req, res) => {
 
 app.listen(3000, () => console.log('🌐 Sistema Online | Igual ao Giggle'));
 
-// 📋 COMANDOS (IGUAIS)
+// 📋 COMANDOS
 const comandos = [
   new SlashCommandBuilder().setName('config').setDescription("⚙️ Configurações da loja")
     .addSubcommand(s => s.setName('pagamentos').setDescription("💳 Configurar formas de pagamento"))
