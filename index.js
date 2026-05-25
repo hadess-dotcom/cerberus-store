@@ -13,7 +13,8 @@ const {
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
-  ActionRowBuilder
+  ActionRowBuilder,
+  EmbedBuilder
 } = require('discord.js')
 
 // 🌐 EXPRESS
@@ -94,17 +95,19 @@ client.once('ready', async () => {
 
   } catch (err) {
 
-    console.log('❌ ERRO AO REGISTRAR:')
     console.log(err)
 
   }
 
 })
 
+// 🛒 PRODUTOS TEMPORÁRIOS
+const produtos = {}
+
 // ⚡ INTERAÇÕES
 client.on('interactionCreate', async interaction => {
 
-  // 📌 SLASH COMMANDS
+  // 📌 COMANDOS
   if (interaction.isChatInputCommand()) {
 
     const command = client.commands.get(interaction.commandName)
@@ -133,15 +136,15 @@ client.on('interactionCreate', async interaction => {
 
         const modal = new ModalBuilder()
           .setCustomId('modal_nome')
-          .setTitle('Configurar Nome')
+          .setTitle('Nome do Produto')
 
         const input = new TextInputBuilder()
           .setCustomId('nome')
-          .setLabel('Digite o nome do produto')
+          .setLabel('Digite o nome')
           .setStyle(TextInputStyle.Short)
-          .setRequired(true)
 
-        const row = new ActionRowBuilder().addComponents(input)
+        const row = new ActionRowBuilder()
+          .addComponents(input)
 
         modal.addComponents(row)
 
@@ -154,15 +157,15 @@ client.on('interactionCreate', async interaction => {
 
         const modal = new ModalBuilder()
           .setCustomId('modal_preco')
-          .setTitle('Configurar Preço')
+          .setTitle('Preço do Produto')
 
         const input = new TextInputBuilder()
           .setCustomId('preco')
           .setLabel('Digite o preço')
           .setStyle(TextInputStyle.Short)
-          .setRequired(true)
 
-        const row = new ActionRowBuilder().addComponents(input)
+        const row = new ActionRowBuilder()
+          .addComponents(input)
 
         modal.addComponents(row)
 
@@ -175,19 +178,93 @@ client.on('interactionCreate', async interaction => {
 
         const modal = new ModalBuilder()
           .setCustomId('modal_desc')
-          .setTitle('Configurar Descrição')
+          .setTitle('Descrição')
 
         const input = new TextInputBuilder()
           .setCustomId('desc')
           .setLabel('Digite a descrição')
           .setStyle(TextInputStyle.Paragraph)
-          .setRequired(true)
 
-        const row = new ActionRowBuilder().addComponents(input)
+        const row = new ActionRowBuilder()
+          .addComponents(input)
 
         modal.addComponents(row)
 
         await interaction.showModal(modal)
+
+      }
+
+      // 🖼️ BANNER
+      if (interaction.customId === 'produto_banner') {
+
+        const modal = new ModalBuilder()
+          .setCustomId('modal_banner')
+          .setTitle('Banner')
+
+        const input = new TextInputBuilder()
+          .setCustomId('banner')
+          .setLabel('Link da imagem')
+          .setStyle(TextInputStyle.Short)
+
+        const row = new ActionRowBuilder()
+          .addComponents(input)
+
+        modal.addComponents(row)
+
+        await interaction.showModal(modal)
+
+      }
+
+      // 📦 ESTOQUE
+      if (interaction.customId === 'produto_estoque') {
+
+        const modal = new ModalBuilder()
+          .setCustomId('modal_estoque')
+          .setTitle('Estoque')
+
+        const input = new TextInputBuilder()
+          .setCustomId('estoque')
+          .setLabel('Quantidade')
+          .setStyle(TextInputStyle.Short)
+
+        const row = new ActionRowBuilder()
+          .addComponents(input)
+
+        modal.addComponents(row)
+
+        await interaction.showModal(modal)
+
+      }
+
+      // 🚀 PUBLICAR
+      if (interaction.customId === 'produto_publicar') {
+
+        const produto = produtos[interaction.user.id]
+
+        const embed = new EmbedBuilder()
+          .setTitle(`🛒 ${produto.nome}`)
+          .setDescription(produto.desc)
+          .addFields(
+            {
+              name: '💰 Preço',
+              value: produto.preco || 'Não definido'
+            },
+            {
+              name: '📦 Estoque',
+              value: produto.estoque || '0'
+            }
+          )
+          .setImage(produto.banner)
+          .setColor('#7B2CBF')
+
+        await interaction.channel.send({
+          embeds: [embed]
+        })
+
+        await interaction.reply({
+          content: '✅ Produto publicado!',
+          ephemeral: true
+        })
 
       }
 
@@ -202,49 +279,69 @@ client.on('interactionCreate', async interaction => {
   // 📥 MODAIS
   if (interaction.isModalSubmit()) {
 
-    try {
+    if (!produtos[interaction.user.id]) {
 
-      // 📝 NOME
-      if (interaction.customId === 'modal_nome') {
-
-        const nome = interaction.fields.getTextInputValue('nome')
-
-        await interaction.reply({
-          content: `✅ Nome definido: ${nome}`,
-          ephemeral: true
-        })
-
-      }
-
-      // 💰 PREÇO
-      if (interaction.customId === 'modal_preco') {
-
-        const preco = interaction.fields.getTextInputValue('preco')
-
-        await interaction.reply({
-          content: `✅ Preço definido: ${preco}`,
-          ephemeral: true
-        })
-
-      }
-
-      // 📄 DESCRIÇÃO
-      if (interaction.customId === 'modal_desc') {
-
-        const desc = interaction.fields.getTextInputValue('desc')
-
-        await interaction.reply({
-          content: `✅ Descrição definida:\n${desc}`,
-          ephemeral: true
-        })
-
-      }
-
-    } catch (err) {
-
-      console.error(err)
+      produtos[interaction.user.id] = {}
 
     }
+
+    const produto = produtos[interaction.user.id]
+
+    // 📝 NOME
+    if (interaction.customId === 'modal_nome') {
+
+      produto.nome =
+        interaction.fields.getTextInputValue('nome')
+
+    }
+
+    // 💰 PREÇO
+    if (interaction.customId === 'modal_preco') {
+
+      produto.preco =
+        interaction.fields.getTextInputValue('preco')
+
+    }
+
+    // 📄 DESCRIÇÃO
+    if (interaction.customId === 'modal_desc') {
+
+      produto.desc =
+        interaction.fields.getTextInputValue('desc')
+
+    }
+
+    // 🖼️ BANNER
+    if (interaction.customId === 'modal_banner') {
+
+      produto.banner =
+        interaction.fields.getTextInputValue('banner')
+
+    }
+
+    // 📦 ESTOQUE
+    if (interaction.customId === 'modal_estoque') {
+
+      produto.estoque =
+        interaction.fields.getTextInputValue('estoque')
+
+    }
+
+    const embed = new EmbedBuilder()
+      .setTitle('🛒 CRIADOR DE PRODUTO')
+      .setDescription(`
+📝 Nome: ${produto.nome || 'Não definido'}
+💰 Preço: ${produto.preco || 'Não definido'}
+📄 Descrição: ${produto.desc || 'Não definida'}
+🖼️ Banner: ${produto.banner || 'Não definido'}
+📦 Estoque: ${produto.estoque || '0'}
+      `)
+      .setColor('#7B2CBF')
+
+    await interaction.reply({
+      embeds: [embed],
+      ephemeral: true
+    })
 
   }
 
