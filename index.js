@@ -101,19 +101,65 @@ client.once('ready', async () => {
 // ⚡ INTERAÇÕES
 client.on('interactionCreate', async interaction => {
 
-  if (!interaction.isChatInputCommand()) return
+  // 📌 SLASH COMMANDS
+  if (interaction.isChatInputCommand()) {
 
-  const command = client.commands.get(interaction.commandName)
+    const command = client.commands.get(interaction.commandName)
 
-  if (!command) return
+    if (!command) return
 
-  try {
+    try {
 
-    await command.execute(interaction)
+      await command.execute(interaction)
 
-  } catch (err) {
+    } catch (err) {
 
-    console.error(err)
+      console.error(err)
+
+    }
+
+  }
+
+  // 🔘 BOTÕES
+  if (interaction.isButton()) {
+
+    try {
+
+      // 🛒 CRIAR PRODUTO
+      if (interaction.customId === 'produto_criar') {
+
+        await interaction.reply({
+          content: '🛒 Sistema de criação iniciado!',
+          ephemeral: true
+        })
+
+      }
+
+      // 💰 PREÇO
+      if (interaction.customId === 'produto_preco') {
+
+        await interaction.reply({
+          content: '💰 Configure o preço do produto.',
+          ephemeral: true
+        })
+
+      }
+
+      // 📦 ESTOQUE
+      if (interaction.customId === 'produto_estoque') {
+
+        await interaction.reply({
+          content: '📦 Configure o estoque.',
+          ephemeral: true
+        })
+
+      }
+
+    } catch (err) {
+
+      console.error(err)
+
+    }
 
   }
 
