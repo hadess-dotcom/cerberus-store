@@ -9,7 +9,11 @@ const {
   Collection,
   ActivityType,
   REST,
-  Routes
+  Routes,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+  ActionRowBuilder
 } = require('discord.js')
 
 // 🌐 EXPRESS
@@ -35,10 +39,9 @@ const client = new Client({
   ]
 })
 
-// 📦 COLLECTION DE COMANDOS
+// 📦 COMANDOS
 client.commands = new Collection()
 
-// 📂 CARREGAR COMANDOS
 const commandFiles = fs
   .readdirSync('./commands')
   .filter(file => file.endsWith('.js'))
@@ -125,31 +128,113 @@ client.on('interactionCreate', async interaction => {
 
     try {
 
-      // 🛒 CRIAR PRODUTO
-      if (interaction.customId === 'produto_criar') {
+      // 📝 NOME
+      if (interaction.customId === 'produto_nome') {
 
-        await interaction.reply({
-          content: '🛒 Sistema de criação iniciado!',
-          ephemeral: true
-        })
+        const modal = new ModalBuilder()
+          .setCustomId('modal_nome')
+          .setTitle('Configurar Nome')
+
+        const input = new TextInputBuilder()
+          .setCustomId('nome')
+          .setLabel('Digite o nome do produto')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true)
+
+        const row = new ActionRowBuilder().addComponents(input)
+
+        modal.addComponents(row)
+
+        await interaction.showModal(modal)
 
       }
 
       // 💰 PREÇO
       if (interaction.customId === 'produto_preco') {
 
+        const modal = new ModalBuilder()
+          .setCustomId('modal_preco')
+          .setTitle('Configurar Preço')
+
+        const input = new TextInputBuilder()
+          .setCustomId('preco')
+          .setLabel('Digite o preço')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true)
+
+        const row = new ActionRowBuilder().addComponents(input)
+
+        modal.addComponents(row)
+
+        await interaction.showModal(modal)
+
+      }
+
+      // 📄 DESCRIÇÃO
+      if (interaction.customId === 'produto_desc') {
+
+        const modal = new ModalBuilder()
+          .setCustomId('modal_desc')
+          .setTitle('Configurar Descrição')
+
+        const input = new TextInputBuilder()
+          .setCustomId('desc')
+          .setLabel('Digite a descrição')
+          .setStyle(TextInputStyle.Paragraph)
+          .setRequired(true)
+
+        const row = new ActionRowBuilder().addComponents(input)
+
+        modal.addComponents(row)
+
+        await interaction.showModal(modal)
+
+      }
+
+    } catch (err) {
+
+      console.error(err)
+
+    }
+
+  }
+
+  // 📥 MODAIS
+  if (interaction.isModalSubmit()) {
+
+    try {
+
+      // 📝 NOME
+      if (interaction.customId === 'modal_nome') {
+
+        const nome = interaction.fields.getTextInputValue('nome')
+
         await interaction.reply({
-          content: '💰 Configure o preço do produto.',
+          content: `✅ Nome definido: ${nome}`,
           ephemeral: true
         })
 
       }
 
-      // 📦 ESTOQUE
-      if (interaction.customId === 'produto_estoque') {
+      // 💰 PREÇO
+      if (interaction.customId === 'modal_preco') {
+
+        const preco = interaction.fields.getTextInputValue('preco')
 
         await interaction.reply({
-          content: '📦 Configure o estoque.',
+          content: `✅ Preço definido: ${preco}`,
+          ephemeral: true
+        })
+
+      }
+
+      // 📄 DESCRIÇÃO
+      if (interaction.customId === 'modal_desc') {
+
+        const desc = interaction.fields.getTextInputValue('desc')
+
+        await interaction.reply({
+          content: `✅ Descrição definida:\n${desc}`,
           ephemeral: true
         })
 
