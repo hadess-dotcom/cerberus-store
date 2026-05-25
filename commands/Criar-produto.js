@@ -3,32 +3,47 @@ const {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonStyle
+  ButtonStyle,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle
 } = require('discord.js')
+
+// 📦 DADOS TEMPORÁRIOS
+const produtos = {}
 
 module.exports = {
 
   data: new SlashCommandBuilder()
     .setName('criar-produto')
-    .setDescription('Painel de criação de produto'),
+    .setDescription('Sistema de produtos'),
 
   async execute(interaction) {
+
+    produtos[interaction.user.id] = {
+      nome: 'Não definido',
+      preco: 'Não definido',
+      descricao: 'Não definida',
+      banner: 'Não definido',
+      estoque: '0'
+    }
+
+    const produto = produtos[interaction.user.id]
 
     const embed = new EmbedBuilder()
       .setTitle('🛒 CRIAR PRODUTO')
       .setDescription(`
-📦 Configure seu produto usando os botões abaixo.
-
-📝 Nome: Não definido
-💸 Preço: Não definido
-📄 Descrição: Não definida
-🖼️ Banner: Não definido
-📦 Estoque: 0 itens
+📝 Nome: ${produto.nome}
+💸 Preço: ${produto.preco}
+📄 Descrição: ${produto.descricao}
+🖼️ Banner: ${produto.banner}
+📦 Estoque: ${produto.estoque}
       `)
       .setColor('#7B2CBF')
 
     const row1 = new ActionRowBuilder()
       .addComponents(
+
         new ButtonBuilder()
           .setCustomId('produto_nome')
           .setLabel('Nome')
@@ -43,10 +58,12 @@ module.exports = {
           .setCustomId('produto_descricao')
           .setLabel('Descrição')
           .setStyle(ButtonStyle.Primary)
+
       )
 
     const row2 = new ActionRowBuilder()
       .addComponents(
+
         new ButtonBuilder()
           .setCustomId('produto_banner')
           .setLabel('Banner')
@@ -61,6 +78,7 @@ module.exports = {
           .setCustomId('produto_publicar')
           .setLabel('Publicar')
           .setStyle(ButtonStyle.Success)
+
       )
 
     await interaction.reply({
@@ -69,6 +87,8 @@ module.exports = {
       ephemeral: true
     })
 
-  }
+  },
+
+  produtos
 
 }
