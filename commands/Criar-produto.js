@@ -3,86 +3,69 @@ const {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonStyle,
-  PermissionFlagsBits
+  ButtonStyle
 } = require('discord.js')
 
 module.exports = {
 
   data: new SlashCommandBuilder()
     .setName('criar-produto')
-    .setDescription('Crie um produto')
-    .addStringOption(option =>
-      option
-        .setName('nome')
-        .setDescription('Nome do produto')
-        .setRequired(true)
-    )
-    .addNumberOption(option =>
-      option
-        .setName('preco')
-        .setDescription('Preço')
-        .setRequired(true)
-    )
-    .addStringOption(option =>
-      option
-        .setName('descricao')
-        .setDescription('Descrição')
-        .setRequired(true)
-    )
-    .addStringOption(option =>
-      option
-        .setName('banner')
-        .setDescription('Link da imagem')
-        .setRequired(false)
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    .setDescription('Painel de criação de produto'),
 
   async execute(interaction) {
 
-    const nome = interaction.options.getString('nome')
-    const preco = interaction.options.getNumber('preco')
-    const descricao = interaction.options.getString('descricao')
-    const banner = interaction.options.getString('banner')
-
     const embed = new EmbedBuilder()
-      .setTitle(`🛒 ${nome}`)
-      .setDescription(descricao)
-      .addFields(
-        {
-          name: '💸 Preço',
-          value: `R$ ${preco.toFixed(2)}`,
-          inline: true
-        },
-        {
-          name: '📦 Estoque',
-          value: '∞',
-          inline: true
-        }
-      )
+      .setTitle('🛒 CRIAR PRODUTO')
+      .setDescription(`
+📦 Configure seu produto usando os botões abaixo.
+
+📝 Nome: Não definido
+💸 Preço: Não definido
+📄 Descrição: Não definida
+🖼️ Banner: Não definido
+📦 Estoque: 0 itens
+      `)
       .setColor('#7B2CBF')
-      .setFooter({
-        text: 'CERBERUS STORE'
-      })
 
-    if(banner) embed.setImage(banner)
-
-    const row = new ActionRowBuilder()
+    const row1 = new ActionRowBuilder()
       .addComponents(
         new ButtonBuilder()
-          .setCustomId('comprar')
-          .setLabel('Comprar')
-          .setEmoji('🛒')
+          .setCustomId('produto_nome')
+          .setLabel('Nome')
+          .setStyle(ButtonStyle.Primary),
+
+        new ButtonBuilder()
+          .setCustomId('produto_preco')
+          .setLabel('Preço')
+          .setStyle(ButtonStyle.Primary),
+
+        new ButtonBuilder()
+          .setCustomId('produto_descricao')
+          .setLabel('Descrição')
+          .setStyle(ButtonStyle.Primary)
+      )
+
+    const row2 = new ActionRowBuilder()
+      .addComponents(
+        new ButtonBuilder()
+          .setCustomId('produto_banner')
+          .setLabel('Banner')
+          .setStyle(ButtonStyle.Secondary),
+
+        new ButtonBuilder()
+          .setCustomId('produto_estoque')
+          .setLabel('Estoque')
+          .setStyle(ButtonStyle.Secondary),
+
+        new ButtonBuilder()
+          .setCustomId('produto_publicar')
+          .setLabel('Publicar')
           .setStyle(ButtonStyle.Success)
       )
 
-    await interaction.channel.send({
+    await interaction.reply({
       embeds: [embed],
-      components: [row]
-    })
-
-    interaction.reply({
-      content: '✅ Produto criado',
+      components: [row1, row2],
       ephemeral: true
     })
 
